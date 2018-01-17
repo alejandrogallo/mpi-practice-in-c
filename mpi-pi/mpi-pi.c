@@ -1,7 +1,7 @@
 
 /* Example from "Using MPI, 3rd ed." */
 
-/* 
+/*
  * int MPI_Init(int * argc, char *** argv)
  * int MPI_Comm_size(MPI Comm comm, int * size)
  * int MPI_Comm_rank(MPI Comm comm, int * rank)
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
      * Here we didn't check the return value (error).
      * */
     MPI_Init(&argc, &argv);
-    /* Pass the total amount of processes to numprocs 
+    /* Pass the total amount of processes to numprocs
      *            communicator     @var            */
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     /* Pass the current process rank to myid
@@ -41,6 +41,8 @@ int main(int argc, char *argv[]) {
             fflush(stdout);
             scanf("%d", &n);
         }
+        /* Returns an elapsed time on the calling processor. */
+        double starttime = MPI_Wtime();
         /*
          * Broadcast the variable n of type MPI_INT to
          * all processes (in MPI_COMM_WORLD) other than
@@ -67,9 +69,13 @@ int main(int argc, char *argv[]) {
              * Here we add up all mypi value into the var pi of the root process.
              * >       @src  @dest nb    type        op  proc  communicator    */
             MPI_Reduce(&mypi, &pi, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-            if (myid == 0)
+            double endtime = MPI_Wtime();
+            if (myid == 0){
                 /* The root process print the result. */
                 printf("pi is approximately %.16f, Error is %.16f\n", pi, fabs(pi - PI25DT));
+                /* MPI_Wtick returns the resolution of MPI_Wtime. */
+                printf("time is %.9lf seconds, time resolution is %.3e\n", endtime - starttime, MPI_Wtick());
+            }
         }
     }
     /* Terminate the MPI env */
