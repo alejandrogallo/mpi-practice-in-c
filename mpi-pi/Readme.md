@@ -26,4 +26,4 @@ mpirun -np 2 mpi-pi
 
 # Reference 
 
-* Using MPI, 3rd ed.
+* Using MPI, 3rd ed. `p.23-31`
