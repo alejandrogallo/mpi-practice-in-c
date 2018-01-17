@@ -16,9 +16,13 @@ The following MPI routine are used :
 # Compilation & Execution
 
 Compilation :
-`mpicc mpi-pi.c -o mpi-pi`
+```
+mpicc mpi-pi.c -o mpi-pi
+```
 Execution :
-`mpirun -np 2 mpi-pi`
+```
+mpirun -np 2 mpi-pi
+```
 
 # Reference 
 
