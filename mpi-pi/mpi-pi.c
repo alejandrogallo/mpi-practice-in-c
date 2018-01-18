@@ -72,9 +72,9 @@ int main(int argc, char *argv[]) {
             double endtime = MPI_Wtime();
             if (myid == 0){
                 /* The root process print the result. */
-                printf("pi is approximately %.16f, Error is %.16f\n", pi, fabs(pi - PI25DT));
+                printf("pi is approximately %.16f, Error is %.16f.\n", pi, fabs(pi - PI25DT));
                 /* MPI_Wtick returns the resolution of MPI_Wtime. */
-                printf("time is %.9lf seconds, time resolution is %.3e\n", endtime - starttime, MPI_Wtick());
+                printf("time is %.9lf seconds, time resolution is %.3e seconds.\n", endtime - starttime, MPI_Wtick());
             }
         }
     }
