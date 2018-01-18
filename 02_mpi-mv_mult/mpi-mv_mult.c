@@ -26,7 +26,7 @@ int min(int a, int b) {
 
 void print_vector(int n, double v[]) {
     for(int i = 0; i < n; i++)
-        printf("[%d:%.1lf] ", i+1, v[i]);
+        printf("[%d:%.1lf] ", i + 1, v[i]);
     puts("");
 }
 
@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
             /* Get the matrix row number */
             anstype = status.MPI_TAG;
             /* Place dot product result in new vector */
-            c[anstype-1] = ans;
+            c[anstype - 1] = ans;
             if (numsent < rows) {
                 /* pack data into buffer. See above. */
                 for (j = 0; j < cols; j++) {
@@ -92,9 +92,9 @@ int main(int argc, char* argv[]) {
                 /* Send a termination message to all other processes.
                  * MPI_BOTTOM is used to indicate the bottom of the address space */
                 MPI_Send(MPI_BOTTOM, 0, MPI_DOUBLE, sender, 0, MPI_COMM_WORLD);
-                print_vector(cols, c);
             }
         }
+        print_vector(cols, c);
     } else {
         /* Broadcast call by worker processes.
          * Note that MPI_Bcast is called by all members of group
@@ -121,5 +121,3 @@ int main(int argc, char* argv[]) {
     MPI_Finalize();
     return 0;
 }
-
-
