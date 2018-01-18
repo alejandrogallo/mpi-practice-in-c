@@ -12,7 +12,6 @@ Manager-worker algorithm : Matrix-Vector Multiplication
     * `int MPI_Comm_size(MPI Comm comm, int * size)`
     * `int MPI_Comm_rank(MPI Comm comm, int * rank)`
     * `int MPI_Bcast(void * buf, int count, MPI Datatype datatype, int root, MPI Comm comm)`
-    * `int MPI_Reduce(const void * sendbuf, void * recvbuf, int count, MPI Datatype datatype, MPI Op op, int root, MPI Comm comm)`
     * `int MPI_Finalize()`
 
 
