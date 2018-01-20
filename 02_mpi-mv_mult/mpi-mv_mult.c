@@ -7,10 +7,10 @@
  * int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status)
  * > routine seen before
  * int MPI_Init(int * argc, char *** argv)
- * int MPI_Comm_size(MPI Comm comm, int * size)
- * int MPI_Comm_rank(MPI Comm comm, int * rank)
- * int MPI_Bcast(void * buf, int count, MPI Datatype datatype, int root, MPI Comm comm)
- * int MPI_Reduce(const void * sendbuf, void * recvbuf, int count, MPI Datatype datatype, MPI Op op, int root, MPI Comm comm)
+ * int MPI_Comm_size(MPI_Comm comm, int * size)
+ * int MPI_Comm_rank(MPI_Comm comm, int * rank)
+ * int MPI_Bcast(void * buf, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
+ * int MPI_Reduce(const void * sendbuf, void * recvbuf, int count, MPI_Datatype datatype, MPI Op op, int root, MPI_Comm comm)
  * int MPI_Finalize()
  */
 
@@ -34,18 +34,18 @@ int main(int argc, char* argv[]) {
     int rows, cols;
     double a[MAX_ROWS][MAX_COLS], b[MAX_COLS];
     double c[MAX_ROWS], buffer[MAX_COLS], ans;
-    int myid, manager, numprocs;
+    int myid, master, numprocs;
     int i, j, numsent, sender;
     int anstype, row;
     MPI_Status status;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
-    /* manager process rank is 0 */
-    manager = 0;
+    /* master process rank is 0 */
+    master = 0;
     rows = 10;
     cols = 10;
-    if (myid == manager) {
+    if (myid == master) {
         /* Create arbitrary matrix and vector */
         for(j = 0; j < cols; j++) {
             b[j] = 1;
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
         }
         numsent = 0;
         /* Manager process broadcast vector to all other processes */
-        MPI_Bcast(b, cols, MPI_DOUBLE, manager, MPI_COMM_WORLD);
+        MPI_Bcast(b, cols, MPI_DOUBLE, master, MPI_COMM_WORLD);
         for (i = 1; i < min(numprocs, rows); i++) {
             /* we pack the data into a contiguous buffer,
              * we will show later that MPI can do this for us.
@@ -99,12 +99,12 @@ int main(int argc, char* argv[]) {
         /* Broadcast call by worker processes.
          * Note that MPI_Bcast is called by all members of group
          * using the same arguments for comm, root.           */
-        MPI_Bcast(b, cols, MPI_DOUBLE, manager, MPI_COMM_WORLD);
+        MPI_Bcast(b, cols, MPI_DOUBLE, master, MPI_COMM_WORLD);
         if (myid <= rows) {
             while(1) {
-                /* Block-receives a matrix row from manager process.
+                /* Block-receives a matrix row from master process.
                 *          @buf    nb     type      source       tag       communicator   status  */
-                MPI_Recv(buffer, cols, MPI_DOUBLE, manager, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+                MPI_Recv(buffer, cols, MPI_DOUBLE, master, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
                 /* Receive termination message */
                 if (status.MPI_TAG == 0) break;
                 row = status.MPI_TAG;
@@ -113,8 +113,8 @@ int main(int argc, char* argv[]) {
                 for (i = 0; i < cols; i++) {
                     ans += buffer[i] * b[i];
                 }
-                /* Send dot product result to manager process */
-                MPI_Send(&ans, 1, MPI_DOUBLE, manager, row, MPI_COMM_WORLD);
+                /* Send dot product result to master process */
+                MPI_Send(&ans, 1, MPI_DOUBLE, master, row, MPI_COMM_WORLD);
             }
         }
     }

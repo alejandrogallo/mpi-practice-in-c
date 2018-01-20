@@ -1,6 +1,6 @@
 # MPI Matrix-Vector Multiplication
 
-Manager-worker algorithm : Matrix-Vector Multiplication
+Master/slave algorithm : Matrix-Vector Multiplication
 
 # MPI Routine
 
@@ -9,9 +9,9 @@ Manager-worker algorithm : Matrix-Vector Multiplication
     * `int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status)`
 * routine seen before
     * `int MPI_Init(int * argc, char *** argv)`
-    * `int MPI_Comm_size(MPI Comm comm, int * size)`
-    * `int MPI_Comm_rank(MPI Comm comm, int * rank)`
-    * `int MPI_Bcast(void * buf, int count, MPI Datatype datatype, int root, MPI Comm comm)`
+    * `int MPI_Comm_size(MPI_Comm comm, int * size)`
+    * `int MPI_Comm_rank(MPI_Comm comm, int * rank)`
+    * `int MPI_Bcast(void * buf, int count, MPI_Datatype datatype, int root, MPI_Comm comm)`
     * `int MPI_Finalize()`
 
 
