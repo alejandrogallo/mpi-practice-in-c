@@ -17,19 +17,20 @@
 #include <mpi.h>
 #include <mpe.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define MAX_AROWS 20
 #define MAX_ACOLS 1000
 #define MAX_BCOLS 20
 
-int min(int a, int b) {
-    return a < b ? a : b;
-}
+#define MPI_ASSERT(fx) do { \
+  assert(fx == MPI_SUCCESS); \
+} while(0)
 
 void print_matrix(int n, int m, double mat[MAX_AROWS][MAX_BCOLS]) {
     for(int i = 0; i < n; i++) {
         for(int j = 0; j < m; j++) {
-            printf("[%02d,%d:%.0lf] ", i + 1, j + 1, mat[i][j]);
+            printf("[%02d,%02d:%.0lf] ", i + 1, j + 1, mat[i][j]);
         }
         puts("");
     }
@@ -44,9 +45,9 @@ int main(int argc, char* argv[]) {
     int i, j, numsent, sender;
     int anstype, row;
     MPI_Status status;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+    MPI_ASSERT(MPI_Init(&argc, &argv));
+    MPI_ASSERT(MPI_Comm_rank(MPI_COMM_WORLD, &myid));
+    MPI_ASSERT(MPI_Comm_size(MPI_COMM_WORLD, &numprocs));
     /* master process rank is 0 */
     arows = 10;
     acols = 20;
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]) {
         MPE_Describe_state(1, 2, "Bcast", "red:vlines3");
         MPE_Describe_state(3, 4, "Compute", "blue:gray3");
         MPE_Describe_state(5, 6, "Send", "green:light_gray");
-        MPE_Describe_state(5, 6, "Send", "green:light_gray");
+        MPE_Describe_state(7, 8, "Recv", "yellow:gray");
         /* Create arbitrary matrices */
         for(j = 0; j < acols; j++) {
             for (i = 0; i < arows; i++) {
@@ -75,14 +76,14 @@ int main(int argc, char* argv[]) {
         numsent = 0;
         /* Manager process broadcast vector to all other processes */
         for (i = 0; i < brows; i++) {
-            MPI_Bcast(b[i], bcols, MPI_DOUBLE, master, MPI_COMM_WORLD);
+            MPI_ASSERT(MPI_Bcast(b[i], bcols, MPI_DOUBLE, master, MPI_COMM_WORLD));
         }
         for(i = 1; i < numprocs; i++) {
             for (j = 0; j < acols; j++) {
                 buffer[j] = a[i][j];
             }
             MPE_Log_event(5, i, "send");
-            MPI_Send(&buffer, acols, MPI_DOUBLE, i, i, MPI_COMM_WORLD);
+            MPI_ASSERT(MPI_Send(&buffer, acols, MPI_DOUBLE, i, i, MPI_COMM_WORLD));
             MPE_Log_event(6, i, "sent");
             numsent++;
         }
@@ -91,7 +92,7 @@ int main(int argc, char* argv[]) {
             /* Performs a standard-mode blocking receive.
              * Block-receives the result of dot product from other processes.
              *       @buf  nb    type        source          tag          communicator  status  */
-            MPI_Recv(&ans, ccols, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            MPI_ASSERT(MPI_Recv(&ans, ccols, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status));
             /* Get the sender rank */
             sender = status.MPI_SOURCE;
             /* Get the matrix row number */
@@ -108,14 +109,14 @@ int main(int argc, char* argv[]) {
                 }
                 MPE_Log_event(5, i, "send");
                 /* Send a new matrix row to the sender process. */
-                MPI_Send(buffer, acols, MPI_DOUBLE, sender, numsent + 1, MPI_COMM_WORLD);
+                MPI_ASSERT(MPI_Send(buffer, acols, MPI_DOUBLE, sender, numsent + 1, MPI_COMM_WORLD));
                 MPE_Log_event(6, i, "sent");
                 numsent++;
             } else {
                 MPE_Log_event(5, 0, "send");
                 /* Send a termination message to all other processes.
                  * MPI_BOTTOM is used to indicate the bottom of the address space */
-                MPI_Send(MPI_BOTTOM, 0, MPI_DOUBLE, sender, 0, MPI_COMM_WORLD);
+                MPI_ASSERT(MPI_Send(MPI_BOTTOM, 0, MPI_DOUBLE, sender, 0, MPI_COMM_WORLD));
                 MPE_Log_event(6, 0, "sent");
             }
         }
@@ -126,14 +127,14 @@ int main(int argc, char* argv[]) {
          * using the same arguments for comm, root.           */
         MPE_Log_event(1, 0, "bstart");
         for (i = 0; i < brows; i++) {
-            MPI_Bcast(b[i], bcols, MPI_DOUBLE, master, MPI_COMM_WORLD);
+            MPI_ASSERT(MPI_Bcast(b[i], bcols, MPI_DOUBLE, master, MPI_COMM_WORLD));
         }
         MPE_Log_event(2, 0, "bend");
         MPE_Log_event(7, i, "recv");
         while(1) {
             /* Block-receives a matrix row from master process.
             *          @buf    nb     type      source       tag       communicator   status  */
-            MPI_Recv(buffer, acols, MPI_DOUBLE, master, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            MPI_ASSERT(MPI_Recv(buffer, acols, MPI_DOUBLE, master, MPI_ANY_TAG, MPI_COMM_WORLD, &status));
             /* Receive termination message */
             if (status.MPI_TAG == 0) break;
             row = status.MPI_TAG;
@@ -149,11 +150,11 @@ int main(int argc, char* argv[]) {
             MPE_Log_event(4, row, "computed");
             MPE_Log_event(5, row, "send");
             /* Send dot product result to master process */
-            MPI_Send(&ans, bcols, MPI_DOUBLE, master, row, MPI_COMM_WORLD);
+            MPI_ASSERT(MPI_Send(&ans, bcols, MPI_DOUBLE, master, row, MPI_COMM_WORLD));
             MPE_Log_event(6, row, "sent");
         }
     }
     MPE_Finish_log("pmatmat.log");
-    MPI_Finalize();
+    MPI_ASSERT(MPI_Finalize());
     return 0;
 }
